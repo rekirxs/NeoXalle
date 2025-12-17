@@ -20,7 +20,7 @@ export default function HomeScreen() {
   // 🔵 STATE
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [status, setStatus] = useState('Disconnected');
-  const [lastMessage, setLastMessage] = useState('None');
+  const [, setLastMessage] = useState('None');
   const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -133,7 +133,7 @@ export default function HomeScreen() {
   }
 
   // 🔵 SEND COMMAND
-  async function sendCommand(cmd: string) {
+ /* async function sendCommand(cmd: string) {
     if (!connectedDevice) return;
 
     await connectedDevice.writeCharacteristicWithResponseForService(
@@ -141,9 +141,9 @@ export default function HomeScreen() {
       CHAR_UUID,
       Buffer.from(cmd).toString('base64')
     );
-  }
+  }*/
 
-  // 🔵 UI (REAL APP)
+  // UI
   return (
     <View 
       style={{  

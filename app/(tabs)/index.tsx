@@ -1,15 +1,15 @@
 import { Buffer } from 'buffer';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Button,
   PermissionsAndroid,
   Platform,
   Text,
-  View,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 
-// 🔵 BLE CONFIG
+// Configuracion del BLUETOOTH
 const NEOXALLE_NAME = 'NEOXALLE';
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHAR_UUID    = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -145,47 +145,42 @@ export default function HomeScreen() {
 
   // 🔵 UI (REAL APP)
   return (
-    <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-      <Text style={{ fontSize: 32, fontWeight: 'bold', textAlign: 'center' }}>
-        NEOXALLE
-      </Text>
-
-      <View style={{ alignItems: 'center', marginVertical: 20 }}>
-        <Text
-          style={{
-            fontSize: 18,
-            color: status === 'Connected' ? 'green' : 'red',
-          }}
-        >
-          ● {status}
+    <View 
+      style={{  
+        flex: 1, 
+        justifyContent: 'space-between', 
+        backgroundColor: '#0B0B0F', 
+        padding: 24 
+      }}
+    >
+      {/*HEADER*/}
+      <View style={{alignItems: 'center', marginTop: 40}}> 
+        <Text style={{color: '#A855F7', fontSize: 36, fontWeight: '800',letterSpacing: 2}}>
+          NEOXALLE
+        </Text>
+        <Text style={{color: '#888', marginTop: 6}}
+        > Excelle with Neoxalle
         </Text>
       </View>
+      {/*STATUS*/}
+      <View style={{alignItems: 'center', marginTop: 30, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 999, backgroundColor: status === 'Connected' ? '#22c55e' : '#EF4444'}}
 
-      {connectedDevice && (
-        <View style={{ marginVertical: 20 }}>
-          <Button title="START" onPress={() => sendCommand('START')} />
-        </View>
+      >
+        <Text style={{color: status === 'Connected' ? '#22c55E':'#EF4444', fontWeight: '600'}}>
+          {status}
+        </Text>
+      </View> 
+
+      {/* ACTION */}
+      {!connectedDevice && (<TouchableOpacity onPress={startScan} disabled={isScanning || isConnecting} 
+        style={{marginTop: 40, backgroundColor: '#A855F7', paddingVertical: 16, borderRadius: 14, opacity: isScanning || isConnecting ? 0.6 : 1}}
+        > 
+          <Text style={{color: '#000', fontSize: 16, fontWeight: '700', textAlign: 'center'}}
+         > {isScanning ? 'Scanning...' : isConnecting ? 'Connecting...' : 'Connect to Neoxalle'}</Text>
+          
+          </TouchableOpacity>
+          
       )}
-
-      <Text style={{ textAlign: 'center', marginTop: 10 }}>
-        Neoxalle says: {lastMessage}
-      </Text>
-
-      {!connectedDevice && (
-        <View style={{ marginTop: 30 }}>
-          <Button
-            title={
-              isScanning
-                ? 'Scanning...'
-                : isConnecting
-                ? 'Connecting...'
-                : 'Connect Neoxalle'
-            }
-            onPress={startScan}
-            disabled={isScanning || isConnecting}
-          />
-        </View>
-      )}
-    </View>
+      </View>
   );
 }

@@ -148,31 +148,67 @@ export default function HomeScreen() {
     <View 
       style={{  
         flex: 1, 
-        justifyContent: 'space-between', 
         backgroundColor: '#0B0B0F', 
         padding: 24 
       }}
     >
       {/*HEADER*/}
-      <View style={{alignItems: 'center', marginTop: 40}}> 
-        <Text style={{color: '#A855F7', fontSize: 36, fontWeight: '800',letterSpacing: 2}}>
-          NEOXALLE
-        </Text>
-        <Text style={{color: '#888', marginTop: 6}}
-        > Excelle with Neoxalle
-        </Text>
-      </View>
-      {/*STATUS*/}
-      <View style={{alignItems: 'center', marginTop: 30, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 999, backgroundColor: status === 'Connected' ? '#22c55e' : '#EF4444'}}
+     <View style={{ alignItems: 'center', marginTop: 40 }}>
+  <Text
+    style={{
+      fontSize: 32,
+      fontWeight: '700',
+      color: '#9B4DFF',
+    }}
+  >
+    NEOXALLE
+  </Text>
 
+  <Text
+    style={{
+      fontSize: 14,
+      color: '#888',
+      marginTop: 4,
+    }}
+  >
+    Excelle with NeoXalle 
+  </Text>
+
+    {/* Status connected or not */}
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+      }}
+    >
+      <Text
+        style={{
+          color: status === 'Connected' ? '#3DFF9A' : '#666',
+          fontSize: 14,
+          marginRight: 6,
+        }}
       >
-        <Text style={{color: status === 'Connected' ? '#22c55E':'#EF4444', fontWeight: '600'}}>
-          {status}
-        </Text>
-      </View> 
+        ●
+      </Text>
 
-      {/* ACTION */}
-      {!connectedDevice && (<TouchableOpacity onPress={startScan} disabled={isScanning || isConnecting} 
+      <Text
+        style={{
+          color: status === 'Connected' ? '#3DFF9A' : '#666',
+          fontSize: 14,
+          fontWeight: '500',
+        }}
+      >
+        {status}
+      </Text>
+    </View>
+  </View>
+
+
+        
+
+      {/* Action Button */}
+      <TouchableOpacity onPress={startScan} disabled={isScanning || isConnecting} 
         style={{marginTop: 40, backgroundColor: '#A855F7', paddingVertical: 16, borderRadius: 14, opacity: isScanning || isConnecting ? 0.6 : 1}}
         > 
           <Text style={{color: '#000', fontSize: 16, fontWeight: '700', textAlign: 'center'}}
@@ -180,7 +216,7 @@ export default function HomeScreen() {
           
           </TouchableOpacity>
           
-      )}
+      
       </View>
   );
 }

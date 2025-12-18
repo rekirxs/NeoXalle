@@ -55,9 +55,9 @@ export const Fonts = Platform.select({
 // Neon / Glass theme tokens for stylized UI
 export const Theme = {
   neon: {
-    purple: '#7C3AED',
-    purpleLight: '#A78BFA',
-    purpleDark: '#5B21B6',
+    purple: '#6f009b',
+    purpleLight: '#a020c0',
+    purpleDark: '#4a0066',
     green: '#1DD1A1',
   },
   background: {
@@ -65,8 +65,8 @@ export const Theme = {
     darkSecondary: '#05020a',
   },
   glow: {
-    soft: 'rgba(124,58,237,0.18)',
-    strong: 'rgba(124,58,237,0.6)',
+    soft: 'rgba(111,0,155,0.18)',
+    strong: 'rgba(111,0,155,0.6)',
   },
   glass: {
     cardBg: 'rgba(255,255,255,0.02)',

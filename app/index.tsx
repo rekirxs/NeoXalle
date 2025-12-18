@@ -1,20 +1,22 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { Buffer } from 'buffer';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
+  InteractionManager,
   PermissionsAndroid,
   Platform,
   Text,
   TouchableOpacity,
-  View,
-  Animated,
-  StyleSheet,
+  View
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { BleManager, Device } from 'react-native-ble-plx';
-import { Theme } from '../../constants/theme';
+import { Theme } from '../constants/theme';
 
 // Configuracion del BLUETOOTH
 const NEOXALLE_NAME = 'NEOXALLE';
@@ -22,6 +24,76 @@ const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHAR_UUID    = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
 const bleManager = new BleManager();
+
+function MaskedLogoSweep() {
+  const sweep = useRef(new Animated.Value(0)).current;
+  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    sweep.setValue(0);
+    const handle = InteractionManager.runAfterInteractions(() => {
+      animRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(sweep, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.inOut(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.delay(1100),
+        ]),
+        { resetBeforeIteration: true }
+      );
+      animRef.current.start();
+    });
+
+    return () => {
+      try { handle.cancel?.(); } catch {}
+      animRef.current?.stop();
+    };
+  }, [sweep]);
+
+  const BAR_WIDTH = 50;
+  const LOGO_WIDTH = 320;
+  // Start fully off left, sweep entirely past right, then reset (no reverse)
+  const translateX = sweep.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, LOGO_WIDTH + BAR_WIDTH * 2],
+  });
+
+  return (
+    <View style={{ width: 320, height: 120 }}>
+      {/* Base logo */}
+      <Image
+        source={require('../assets/images/NeoXalle.png')}
+        style={{ width: 320, height: 120, resizeMode: 'contain' }}
+      />
+
+      {/* Masked vertical sweep over text only */}
+      <MaskedView
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        maskElement={
+          <Image
+            source={require('../assets/images/NeoXalle.png')}
+            style={{ width: 320, height: 120, resizeMode: 'contain' }}
+          />
+        }
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={{ position: 'absolute', top: 0, bottom: 0, left: -BAR_WIDTH, width: BAR_WIDTH, transform: [{ translateX }] }}
+        >
+          <LinearGradient
+            colors={[ 'rgba(0,0,0,0)', Theme.neon.purpleLight, 'rgba(0,0,0,0)' ]}
+            start={[0, 0]}
+            end={[0, 1]}
+            style={{ flex: 1, opacity: 0.9 }}
+          />
+        </Animated.View>
+      </MaskedView>
+    </View>
+  );
+}
 
 export default function HomeScreen() {
   // 🔵 STATE
@@ -35,16 +107,41 @@ export default function HomeScreen() {
   const pendingDevice = useRef<Device | null>(null);
 
   // animated glow under device image
-  const glowAnim = useRef(new Animated.Value(0)).current;
+  // start at the lower subtle value so the first cycle doesn't snap
+  const glowAnim = useRef(new Animated.Value(0.25)).current;
+  const glowLoopRef = useRef<Animated.CompositeAnimation | null>(null);
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 1400, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0.25, duration: 1400, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
+    glowAnim.setValue(0.25);
+    
+    const startGlowAnimation = () => {
+      glowLoopRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 1400,
+            easing: Easing.inOut(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.25,
+            duration: 1600,
+            easing: Easing.inOut(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+        { resetBeforeIteration: false }
+      );
+      glowLoopRef.current.start();
+    };
+
+    const handle = InteractionManager.runAfterInteractions(startGlowAnimation);
+    const timeoutId = setTimeout(startGlowAnimation, 500); // Fallback if no interactions
+    
+    return () => {
+      try { handle.cancel?.(); } catch {}
+      clearTimeout(timeoutId);
+      glowLoopRef.current?.stop();
+    };
   }, [glowAnim]);
 
   // 🔵 CLEANUP
@@ -75,31 +172,44 @@ export default function HomeScreen() {
     setIsScanning(true);
     pendingDevice.current = null;
 
-    bleManager.startDeviceScan(null, null, (error, device) => {
-      if (error) {
-        console.log('Scan error:', error);
-        setStatus('Scan error');
-        setIsScanning(false);
-        return;
-      }
+    try {
+      bleManager.startDeviceScan(null, null, (error, device) => {
+        if (error) {
+          console.log('Scan error:', error);
+          setStatus('Scan error');
+          setIsScanning(false);
+          return;
+        }
 
-      if (
-        device?.name === NEOXALLE_NAME &&
-        !pendingDevice.current
-      ) {
-        console.log('🔍 Neoxalle found, stopping scan...');
-        pendingDevice.current = device;
+        if (
+          device?.name === NEOXALLE_NAME &&
+          !pendingDevice.current
+        ) {
+          console.log('🔍 Neoxalle found, stopping scan...');
+          pendingDevice.current = device;
 
-        bleManager.stopDeviceScan();
-        setIsScanning(false);
-        setStatus('Device found');
+          try {
+            bleManager.stopDeviceScan();
+          } catch (stopErr) {
+            console.warn('stopDeviceScan failed:', stopErr);
+          }
 
-        // ⏱ CRITICAL DELAY (Android BLE stability)
-        setTimeout(() => {
-          connect(device);
-        }, 800);
-      }
-    });
+          setIsScanning(false);
+          setStatus('Device found');
+
+          // ⏱ CRITICAL DELAY (Android BLE stability)
+          setTimeout(() => {
+            connect(device).catch((err) => {
+              console.warn('connect error (delayed):', err);
+            });
+          }, 800);
+        }
+      });
+    } catch (e) {
+      console.warn('startDeviceScan threw:', e);
+      setStatus('Scan failed');
+      setIsScanning(false);
+    }
 
     // Safety stop
     setTimeout(() => {
@@ -119,25 +229,33 @@ export default function HomeScreen() {
       const connected = await device.connect();
       await connected.discoverAllServicesAndCharacteristics();
 
-      connected.monitorCharacteristicForService(
-        SERVICE_UUID,
-        CHAR_UUID,
-        (error, characteristic) => {
-          if (error) {
-            console.log('Notify error:', error);
-            return;
-          }
+      try {
+        connected.monitorCharacteristicForService(
+          SERVICE_UUID,
+          CHAR_UUID,
+          (error, characteristic) => {
+            if (error) {
+              console.log('Notify error:', error);
+              return;
+            }
 
-          if (characteristic?.value) {
-            const value = Buffer
-              .from(characteristic.value, 'base64')
-              .toString('utf-8');
+            if (characteristic?.value) {
+              try {
+                const value = Buffer
+                  .from(characteristic.value, 'base64')
+                  .toString('utf-8');
 
-            console.log('📡 From Neoxalle:', value);
-            setLastMessage(value);
+                console.log('📡 From Neoxalle:', value);
+                setLastMessage(value);
+              } catch (parseErr) {
+                console.warn('Failed to parse characteristic value:', parseErr);
+              }
+            }
           }
-        }
-      );
+        );
+      } catch (monErr) {
+        console.warn('monitorCharacteristicForService failed:', monErr);
+      }
 
       setConnectedDevice(connected);
       setStatus('Connected');
@@ -185,26 +303,14 @@ export default function HomeScreen() {
       style={{ flex: 1, padding: 24 }}
     >
       {/*HEADER*/}
-     <View style={{ alignItems: 'center', marginTop: 40 }}>
-  
-  <Text
-    style={{
-      fontSize: 50,
-      fontWeight: '700',
-      color: Theme.neon.purpleLight,
-      textShadowColor: Theme.glow.soft,
-      textShadowOffset: { width: 0, height: 6 },
-      textShadowRadius: 18,
-    }}
-  >
-    NEOXALLE
-  </Text>
+     <View style={{ alignItems: 'center', marginTop: 24 }}>
+      <MaskedLogoSweep />
 
   <Text
     style={{
       fontSize: 14,
       color: '#888',
-      marginTop: 6,
+      marginTop: -20,
     }}
   >
     Excelle with NeoXalle 
@@ -214,7 +320,7 @@ export default function HomeScreen() {
   <View
     style={{
       alignItems: 'center',
-      marginTop: 100,
+      marginTop: 80,
     }}
   >
     
@@ -254,17 +360,17 @@ export default function HomeScreen() {
           borderRadius: 100,
           backgroundColor: Theme.glow.soft,
           transform: [
-            { scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.12] }) }
+            { scale: glowAnim.interpolate({ inputRange: [0.25, 1], outputRange: [0.95, 1.12] }) }
           ],
-          opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.95] }),
+          opacity: glowAnim.interpolate({ inputRange: [0.25, 1], outputRange: [0.45, 0.95] }),
           shadowColor: Theme.neon.purple,
           shadowRadius: 24,
         }}
       />
-      <Image
+      {/*<Image
         source={require('../../assets/images/NeoXalle.png')}
-        style={{ width: 280, height: 160, resizeMode: 'contain', transform: [{ scaleX: 2 }, { scaleY: 2 }] }}
-      />
+        style={{ width: 320, height: 200, resizeMode: 'contain' }}
+      />*/}
     </View>
   </View>
   
@@ -286,7 +392,7 @@ export default function HomeScreen() {
 }}>
   <Text style={{ color: '#fff', fontWeight: '600', marginBottom: 6 }}>Device</Text>
   <Text style={{ color: '#ccc', fontSize: 13 }}>Status: {status}</Text>
-</View>
+</BlurView>
         
 
       {/* Action Buttons: Scan (🔍) and Disconnect */}

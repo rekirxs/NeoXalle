@@ -51,3 +51,25 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+// Neon / Glass theme tokens for stylized UI
+export const Theme = {
+  neon: {
+    purple: '#7C3AED',
+    purpleLight: '#A78BFA',
+    purpleDark: '#5B21B6',
+    green: '#1DD1A1',
+  },
+  background: {
+    darkPrimary: '#0b0710',
+    darkSecondary: '#05020a',
+  },
+  glow: {
+    soft: 'rgba(124,58,237,0.18)',
+    strong: 'rgba(124,58,237,0.6)',
+  },
+  glass: {
+    cardBg: 'rgba(255,255,255,0.02)',
+    border: 'rgba(255,255,255,0.06)',
+  },
+};

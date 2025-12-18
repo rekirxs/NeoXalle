@@ -1,5 +1,5 @@
 {
-  "name": "beixalle",
+  "name": "NeoXalle",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -17,11 +17,13 @@
     "@react-navigation/native": "^7.1.8",
     "buffer": "^6.0.3",
     "expo": "~54.0.29",
+    "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.12",
     "expo-dev-client": "~6.0.20",
     "expo-font": "~14.0.10",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.10",
     "expo-router": "~6.0.19",
     "expo-splash-screen": "~31.0.12",

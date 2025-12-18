@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Buffer } from 'buffer';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   Image,
@@ -7,9 +8,13 @@ import {
   Platform,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Animated,
+  StyleSheet,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { BleManager, Device } from 'react-native-ble-plx';
+import { Theme } from '../../constants/theme';
 
 // Configuracion del BLUETOOTH
 const NEOXALLE_NAME = 'NEOXALLE';
@@ -28,6 +33,19 @@ export default function HomeScreen() {
 
   // 🔵 REF (prevents Android BLE race condition)
   const pendingDevice = useRef<Device | null>(null);
+
+  // animated glow under device image
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0.25, duration: 1400, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [glowAnim]);
 
   // 🔵 CLEANUP
   useEffect(() => {
@@ -160,22 +178,23 @@ export default function HomeScreen() {
 
   // UI
   return (
-    <View 
-      style={{  
-        flex: 1, 
-        backgroundColor: '#0B0B0F', 
-        padding: 24 
-      }}
+    <LinearGradient
+      colors={[Theme.background.darkPrimary, Theme.background.darkSecondary, Theme.neon.purpleDark]}
+      start={[0, 0]}
+      end={[1, 1]}
+      style={{ flex: 1, padding: 24 }}
     >
       {/*HEADER*/}
      <View style={{ alignItems: 'center', marginTop: 40 }}>
   
   <Text
     style={{
-      fontSize: 50
-      ,
+      fontSize: 50,
       fontWeight: '700',
-      color: '#9B4DFF',
+      color: Theme.neon.purpleLight,
+      textShadowColor: Theme.glow.soft,
+      textShadowOffset: { width: 0, height: 6 },
+      textShadowRadius: 18,
     }}
   >
     NEOXALLE
@@ -225,26 +244,45 @@ export default function HomeScreen() {
         {status}
       </Text>
     </View>
-    <Image
-      source={require('../../assets/images/NeoXalle.png')}
-      style={{ width: 280, height: 160, resizeMode: 'contain', marginTop: 15, scaleX: 2, scaleY: 2  }}
-    />
+    <View style={{ marginTop: 15, width: 280, height: 180, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        style={{
+          position: 'absolute',
+          bottom: 12,
+          width: 240,
+          height: 70,
+          borderRadius: 100,
+          backgroundColor: Theme.glow.soft,
+          transform: [
+            { scale: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.12] }) }
+          ],
+          opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.95] }),
+          shadowColor: Theme.neon.purple,
+          shadowRadius: 24,
+        }}
+      />
+      <Image
+        source={require('../../assets/images/NeoXalle.png')}
+        style={{ width: 280, height: 160, resizeMode: 'contain', transform: [{ scaleX: 2 }, { scaleY: 2 }] }}
+      />
+    </View>
   </View>
   
   </View>
 
-     <View style={{
-  backgroundColor: '#0F1113',
-  borderColor: '#232428',
+    <BlurView intensity={60} tint="dark" style={{
+  backgroundColor: Theme.glass.cardBg,
+  borderColor: Theme.glass.border,
   borderWidth: 1,
   padding: 12,
   borderRadius: 12,
   marginTop: 100,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.25,
-  shadowRadius: 6,
-  elevation: 6
+  shadowColor: Theme.neon.purpleDark,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.18,
+  shadowRadius: 24,
+  elevation: 8,
+  overflow: 'hidden'
 }}>
   <Text style={{ color: '#fff', fontWeight: '600', marginBottom: 6 }}>Device</Text>
   <Text style={{ color: '#ccc', fontSize: 13 }}>Status: {status}</Text>
@@ -259,16 +297,24 @@ export default function HomeScreen() {
           style={{
             flex: 1,
             marginRight: 8,
-            backgroundColor: '#A855F7',
+            backgroundColor: 'transparent',
             paddingVertical: 16,
             borderRadius: 14,
             opacity: isScanning || isConnecting || connectedDevice ? 0.6 : 1,
-            alignItems: 'center'
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.04)'
           }}
         >
+          <LinearGradient
+            colors={[Theme.neon.purple, Theme.neon.purpleLight]}
+            start={[0, 0]}
+            end={[1, 0]}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 14, opacity: 0.12 }}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialCommunityIcons name="magnify" size={18} color="#000" style={{ marginRight: 8 }} />
-            <Text style={{ color: '#000', fontSize: 16, fontWeight: '700' }}>
+            <MaterialCommunityIcons name="magnify" size={18} color={Theme.neon.purpleDark} style={{ marginRight: 8 }} />
+            <Text style={{ color: Theme.neon.purpleDark, fontSize: 16, fontWeight: '700' }}>
               {isScanning ? 'Scanning...' : isConnecting ? 'Connecting...' : 'Scan Devices'}
             </Text>
           </View>
@@ -280,16 +326,24 @@ export default function HomeScreen() {
           style={{
             flex: 1,
             marginLeft: 8,
-            backgroundColor: connectedDevice ? '#FF6B6B' : '#3A3A3A',
+            backgroundColor: 'transparent',
             paddingVertical: 16,
             borderRadius: 14,
             opacity: connectedDevice ? 1 : 0.6,
-            alignItems: 'center'
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.04)'
           }}
         >
+          <LinearGradient
+            colors={[Theme.neon.purple, Theme.neon.purpleLight]}
+            start={[0, 0]}
+            end={[1, 0]}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 14, opacity: 0.08 }}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialCommunityIcons name="bluetooth-off" size={18} color={connectedDevice ? '#000' : '#888'} style={{ marginRight: 8 }} />
-            <Text style={{ color: connectedDevice ? '#000' : '#888', fontSize: 16, fontWeight: '700' }}>
+            <MaterialCommunityIcons name="bluetooth-off" size={18} color={connectedDevice ? Theme.neon.purpleDark : '#888'} style={{ marginRight: 8 }} />
+            <Text style={{ color: connectedDevice ? Theme.neon.purpleDark : '#888', fontSize: 16, fontWeight: '700' }}>
               Disconnect
             </Text>
           </View>
@@ -297,7 +351,6 @@ export default function HomeScreen() {
       </View>
           
       
-      </View>
-      
+    </LinearGradient>
   );
 }

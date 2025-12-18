@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "beixalle",
-    "slug": "beixalle",
+    "name": "NeoXalle",
+    "slug": "NeoXalle",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "beixalle",
+    "scheme": "neoxalle",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -33,7 +33,7 @@
         "BLUETOOTH_CONNECT",
         "ACCESS_FINE_LOCATION"
       ],
-      "package": "com.anonymous.beixalle"
+      "package": "com.anonymous.neoxalle"
     },
     "web": {
       "output": "static",

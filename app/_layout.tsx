@@ -1,5 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Animated } from 'react-native';
 import { Theme } from '../constants/theme';
 
 // Guard expo-keep-awake calls to avoid native activation crashes at runtime.
@@ -32,8 +34,19 @@ import { Theme } from '../constants/theme';
 })();
 
 export default function TabsLayout() {
+  const pathname = usePathname();
+  const tabBarTranslate = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(tabBarTranslate, {
+      toValue: pathname === '/connect' ? 100 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [pathname, tabBarTranslate]);
+
   const iconMap: Record<string, string> = {
-    index: 'bluetooth',
+    index: 'home',
     control: 'gamepad-variant',
     explore: 'compass-outline',
     modal: 'dots-horizontal'
@@ -44,8 +57,13 @@ export default function TabsLayout() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
           backgroundColor: Theme.background.darkPrimary,
           borderTopColor: 'rgba(255,255,255,0.05)',
+          transform: [{ translateY: tabBarTranslate }],
         },
         tabBarActiveTintColor: Theme.neon.purpleLight,
         tabBarInactiveTintColor: '#777',
@@ -53,10 +71,12 @@ export default function TabsLayout() {
           const name = iconMap[route.name] ?? 'circle-outline';
           return <MaterialCommunityIcons name={name as any} size={size} color={color} />;
         },
+        tabBarShowLabel: false,
       })}
     >
-      <Tabs.Screen name="index" options={{ title: 'Connect' }} />
-      <Tabs.Screen name="control" options={{ title: 'Control' }} />
+      <Tabs.Screen name="index" options={{ title: '' }} />
+      <Tabs.Screen name="control" options={{ title: '' }} />
+      <Tabs.Screen name="connect" options={{ href: null }} />
     </Tabs>
   );
 }

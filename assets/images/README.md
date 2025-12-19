@@ -3,7 +3,7 @@ Place the attached image file here as `stool.png`.
 Path (workspace-relative): assets/images/stool.png
 
 On Windows you can save the attachment to:
-C:\Users\<you>\OneDrive\Escritorio\beixalle\assets\images\stool.png
+C:\Users\<you>\OneDrive\Escritorio\NeoXalle\assets\images\stool.png
 
 Example usage in a React Native / Expo component:
 

@@ -28,11 +28,13 @@ SystemUI.setBackgroundColorAsync(Theme.background.darkPrimary);
             }
           };
         }
-      } catch (_) {}
+      } catch {
+        // ignore
+      }
     };
 
     ['activateKeepAwake', 'deactivateKeepAwake', 'preventAutoHideAsync', 'allowAutoHideAsync'].forEach(wrap);
-  } catch (e) {
+  } catch {
     // ignore
   }
 })();
@@ -70,12 +72,14 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarStyle: {
             position: 'absolute',
-            bottom: 0,
+            bottom: 25,
             left: 0,
             right: 0,
             backgroundColor: Theme.background.darkPrimary,
             borderTopColor: 'rgba(255,255,255,0.05)',
             transform: [{ translateY: tabBarTranslate }],
+            height: 60,
+            paddingBottom: 5,
           },
           tabBarActiveTintColor: Theme.neon.purpleLight,
           tabBarInactiveTintColor: '#777',

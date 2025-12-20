@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { BleManager } from 'react-native-ble-plx';
 import { Theme } from '../constants/theme';
 
 function MaskedLogoSweep() {
@@ -85,8 +86,25 @@ function MaskedLogoSweep() {
   );
 }
 
+const bleManager = new BleManager();
+
 export default function HomeScreen() {
   const router = useRouter();
+  const [isConnected, setIsConnected] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Check connected devices when screen comes into focus
+      const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+      bleManager.connectedDevices([SERVICE_UUID]).then((devices) => {
+        console.log('Connected devices:', devices.length);
+        setIsConnected(devices.length > 0);
+      }).catch((err) => {
+        console.log('Error checking devices:', err);
+        setIsConnected(false);
+      });
+    }, [])
+  );
 
   return (
     <LinearGradient
@@ -103,16 +121,16 @@ export default function HomeScreen() {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: isConnected ? 'rgba(61,255,154,0.15)' : 'rgba(255,255,255,0.1)',
             alignItems: 'center',
             justifyContent: 'center',
             borderWidth: 1,
-            borderColor: '#666',
+            borderColor: isConnected ? '#3DFF9A' : '#666',
           }}
         >
-          <MaterialCommunityIcons name="bluetooth-off" size={20} color="#666" />
+          <MaterialCommunityIcons name={isConnected ? "bluetooth-connect" : "bluetooth-off"} size={20} color={isConnected ? '#3DFF9A' : '#666'} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 9, color: '#666', marginTop: 4 }}>Disconnected</Text>
+        <Text style={{ fontSize: 9, color: isConnected ? '#3DFF9A' : '#666', marginTop: 4 }}>{isConnected ? 'Connected' : 'Disconnected'}</Text>
       </View>
 
       {/* Logo - Top Center */}

@@ -84,6 +84,10 @@ export default function TabsLayout() {
             return <MaterialCommunityIcons name={name as any} size={size} color={color} />;
           },
           tabBarShowLabel: false,
+          animation: 'shift',
+          sceneStyle: {
+            backgroundColor: Theme.background.darkPrimary,
+          },
         })}
       >
         <Tabs.Screen name="index" options={{ title: '' }} />

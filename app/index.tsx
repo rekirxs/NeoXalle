@@ -7,7 +7,6 @@ import {
   Animated,
   Easing,
   Image,
-  InteractionManager,
   Text,
   TouchableOpacity,
   View
@@ -16,11 +15,10 @@ import { Theme } from '../constants/theme';
 
 function MaskedLogoSweep() {
   const sweep = useRef(new Animated.Value(0)).current;
-  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+  const animRef = useRef<any>(null);
 
   useEffect(() => {
-    sweep.setValue(0);
-    const handle = InteractionManager.runAfterInteractions(() => {
+    const startAnimation = () => {
       animRef.current = Animated.loop(
         Animated.sequence([
           Animated.timing(sweep, {
@@ -34,17 +32,20 @@ function MaskedLogoSweep() {
         { resetBeforeIteration: true }
       );
       animRef.current.start();
-    });
+    };
 
+    requestAnimationFrame(startAnimation);
+    
     return () => {
-      try { handle.cancel?.(); } catch {}
-      animRef.current?.stop();
+      if (animRef.current) {
+        animRef.current.stop();
+      }
     };
   }, [sweep]);
 
   const BAR_WIDTH = 20;
   const LOGO_WIDTH = 120;
-  // Start fully off left, sweep entirely past right, then reset (no reverse)
+  
   const translateX = sweep.interpolate({
     inputRange: [0, 1],
     outputRange: [0, LOGO_WIDTH + BAR_WIDTH * 2],
@@ -58,11 +59,11 @@ function MaskedLogoSweep() {
         style={{ width: 120, height: 45, resizeMode: 'contain' }}
       />
 
-      {/* Masked vertical sweep over text only */}
+      {/* Masked horizontal sweep over text only */}
       <MaskedView
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
         maskElement={
-          <Image
+          <Image  
             source={require('../assets/images/NeoXalle.png')}
             style={{ width: 120, height: 45, resizeMode: 'contain' }}
           />
@@ -73,10 +74,10 @@ function MaskedLogoSweep() {
           style={{ position: 'absolute', top: 0, bottom: 0, left: -BAR_WIDTH, width: BAR_WIDTH, transform: [{ translateX }] }}
         >
           <LinearGradient
-            colors={[ 'rgba(0,0,0,0)', Theme.neon.purpleLight, 'rgba(0,0,0,0)' ]}
-            start={[0, 0]}
-            end={[0, 1]}
-            style={{ flex: 1, opacity: 0.9 }}
+            colors={[ 'rgba(160,32,192,0)', 'rgba(160,32,192,1)', 'rgba(160,32,192,0)' ]}
+            start={[0, 0.5]}
+            end={[1, 0.5]}
+            style={{ flex: 1 }}
           />
         </Animated.View>
       </MaskedView>
@@ -86,7 +87,7 @@ function MaskedLogoSweep() {
 
 export default function HomeScreen() {
   const router = useRouter();
-  // UI
+
   return (
     <LinearGradient
       colors={[Theme.neon.purpleDark, '#1a1a1a', '#0d0d0d']}

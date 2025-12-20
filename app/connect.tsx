@@ -1,15 +1,19 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { Buffer } from 'buffer';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    PermissionsAndroid,
-    Platform,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  Easing,
+  Image,
+  PermissionsAndroid,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import { Theme } from '../constants/theme';
@@ -20,6 +24,209 @@ const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHAR_UUID    = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
 const bleManager = new BleManager();
+
+function PodImage({ connected }: { connected: boolean }) {
+  const glowX = useRef(new Animated.Value(-240)).current;
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const unlockScale = useRef(new Animated.Value(1)).current;
+  const ringScale = useRef(new Animated.Value(0.9)).current;
+  const ringOpacity = useRef(new Animated.Value(0)).current;
+  const wasConnected = useRef(false);
+  const glowLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    function reset() {
+      glowX.setValue(-240);
+      glowOpacity.setValue(0);
+      unlockScale.setValue(1);
+      ringScale.setValue(0.9);
+      ringOpacity.setValue(0);
+    }
+
+    if (!connected) {
+      // If we were connected, play the reverse "lock" motion.
+      if (wasConnected.current) {
+        if (glowLoopRef.current) {
+          try { glowLoopRef.current.stop(); } catch {}
+          glowLoopRef.current = null;
+        }
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(unlockScale, {
+              toValue: 0.95,
+              duration: 160,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(ringOpacity, {
+              toValue: 1,
+              duration: 140,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(ringScale, {
+              toValue: 0.95,
+              duration: 160,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(ringOpacity, {
+              toValue: 0,
+              duration: 240,
+              easing: Easing.in(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(glowOpacity, {
+              toValue: 0,
+              duration: 220,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+          ]),
+        ]).start(() => {
+          reset();
+          wasConnected.current = false;
+        });
+      } else {
+        reset();
+        wasConnected.current = false;
+      }
+      return;
+    }
+
+    // On connect: subtle unlock pulse, then start continuous glow loop.
+    if (glowLoopRef.current) {
+      try { glowLoopRef.current.stop(); } catch {}
+      glowLoopRef.current = null;
+    }
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(unlockScale, {
+          toValue: 1.06,
+          duration: 180,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(ringOpacity, {
+          toValue: 1,
+          duration: 160,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(ringScale, {
+          toValue: 1.15,
+          duration: 220,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(unlockScale, {
+          toValue: 1,
+          duration: 160,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(ringOpacity, {
+          toValue: 0,
+          duration: 280,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      wasConnected.current = true;
+      Animated.timing(glowOpacity, {
+        toValue: 0.9,
+        duration: 200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start(() => {
+        const loop = Animated.loop(
+          Animated.sequence([
+            Animated.timing(glowX, {
+              toValue: 240,
+              duration: 1600,
+              easing: Easing.inOut(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(glowX, {
+              toValue: -240,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+        glowLoopRef.current = loop;
+        loop.start();
+      });
+    });
+  }, [connected, glowX, glowOpacity, unlockScale, ringScale, ringOpacity]);
+
+  return (
+    <View style={{ marginBottom: 30, alignItems: 'center', justifyContent: 'center', width: 240, height: 240 }}>
+      <Animated.View style={{ transform: [{ scale: unlockScale }] }}>
+        <Image
+          source={require('../assets/images/pod-transparent.png')}
+          style={{
+            width: 220,
+            height: 220,
+            resizeMode: 'contain',
+            tintColor: connected ? undefined : '#888',
+            opacity: connected ? 1 : 0.7,
+          }}
+        />
+      </Animated.View>
+
+      {/* Unlock ring pulse */}
+      {connected && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: 240,
+            height: 240,
+            borderRadius: 120,
+            borderWidth: 2,
+            borderColor: Theme.neon.purpleLight,
+            opacity: ringOpacity,
+            transform: [{ scale: ringScale }],
+          }}
+        />
+      )}
+
+      {/* Glow sweep masked to pod */}
+      {connected && (
+        <MaskedView
+          style={{ position: 'absolute', width: 220, height: 220 }}
+          maskElement={
+            <Image
+              source={require('../assets/images/pod-transparent.png')}
+              style={{ width: 220, height: 220, resizeMode: 'contain' }}
+            />
+          }
+        >
+          <Animated.View
+            style={{
+              width: 440,
+              height: 220,
+              opacity: glowOpacity,
+              transform: [{ translateX: glowX }],
+            }}
+          >
+            <LinearGradient
+              colors={['transparent', Theme.neon.purpleLight, Theme.neon.purple, 'transparent']}
+              start={[0, 0]}
+              end={[1, 0]}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
+        </MaskedView>
+      )}
+    </View>
+  );
+}
 
 export default function ConnectScreen() {
   const router = useRouter();
@@ -71,10 +278,7 @@ export default function ConnectScreen() {
           return;
         }
 
-        if (
-          device?.name === NEOXALLE_NAME &&
-          !pendingDevice.current
-        ) {
+        if (device?.name === NEOXALLE_NAME && !pendingDevice.current) {
           console.log('🔍 Neoxalle found, stopping scan...');
           pendingDevice.current = device;
 
@@ -118,6 +322,18 @@ export default function ConnectScreen() {
     try {
       const connected = await device.connect();
       await connected.discoverAllServicesAndCharacteristics();
+
+      // Monitor disconnection
+      bleManager.onDeviceDisconnected(connected.id, (error, disconnectedDevice) => {
+        console.log('Device disconnected:', disconnectedDevice?.id);
+        if (error) {
+          console.log('Disconnection error:', error);
+        }
+        setConnectedDevice(null);
+        setStatus('Disconnected');
+        setIsConnecting(false);
+        pendingDevice.current = null;
+      });
 
       try {
         connected.monitorCharacteristicForService(
@@ -166,11 +382,14 @@ export default function ConnectScreen() {
     try {
       setStatus('Disconnecting...');
       await connectedDevice.cancelConnection();
+      setConnectedDevice(null);
+      setStatus('Disconnected');
     } catch (e) {
       console.log('Disconnect error:', e);
+      // Force cleanup even if disconnect fails
+      setConnectedDevice(null);
+      setStatus('Disconnected');
     }
-    setConnectedDevice(null);
-    setStatus('Disconnected');
   }
 
   // UI
@@ -202,7 +421,7 @@ export default function ConnectScreen() {
 
       <View style={{ alignItems: 'center', marginTop: 80 }}>
         <Text style={{ fontSize: 28, fontWeight: '700', color: Theme.neon.purpleLight, marginBottom: 40 }}>
-          Connect Device
+          Connect to Neoxalle
         </Text>
 
         {/* Status */}
@@ -226,6 +445,9 @@ export default function ConnectScreen() {
             {status}
           </Text>
         </View>
+
+        {/* Pod Image (unlock pulse + glow sweep on connect) */}
+        <PodImage connected={!!connectedDevice} />
 
         {/* Device Info Card */}
         <BlurView

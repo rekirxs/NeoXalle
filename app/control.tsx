@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BleManager, Characteristic, Device } from 'react-native-ble-plx';
 import { Theme } from '../constants/theme';
+import { saveGameRecord } from './database';
 
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -237,6 +238,21 @@ export default function ControlScreen() {
     setGameMode('finished');
     
     sendCommand('{"command":"stop_game"}');
+    
+    // Save game to database
+    const winner = Object.entries(scores).reduce((max, [id, score]) => 
+      score > (scores[max] || 0) ? parseInt(id) : max, 
+      parseInt(Object.keys(scores)[0] || '0')
+    );
+    
+    saveGameRecord({
+      timestamp: Date.now(),
+      gameType: 'Reaction Game',
+      duration: gameDuration,
+      players: Object.keys(scores).length,
+      scores: scores,
+      winner: winner,
+    });
   };
   
   const resetGame = () => {

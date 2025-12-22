@@ -59,6 +59,8 @@ export const Theme = {
     purpleLight: '#a020c0',
     purpleDark: '#4a0066',
     green: '#1DD1A1',
+    cyan: '#00f5ff',
+    pink: '#ff006e',
   },
   background: {
     darkPrimary: '#0b0710',

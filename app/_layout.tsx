@@ -16,7 +16,7 @@ SystemUI.setBackgroundColorAsync(Theme.background.darkPrimary);
     const KeepAwake = await import('expo-keep-awake');
     const wrap = (name: string) => {
       try {
-        const orig = (KeepAwake as any)[name];
+        const orig = (KeepAwake as any)[name]; 
         if (typeof orig === 'function') {
           (KeepAwake as any)[name] = async (...args: any[]) => {
             try {
@@ -60,6 +60,7 @@ export default function TabsLayout() {
   const iconMap: Record<string, string> = {
     index: 'home',
     control: 'gamepad-variant',
+    database: 'database',
     explore: 'compass-outline',
     modal: 'dots-horizontal'
   };
@@ -96,6 +97,7 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="index" options={{ title: '' }} />
         <Tabs.Screen name="control" options={{ title: '' }} />
+        <Tabs.Screen name="database" options={{ title: '' }} />
         <Tabs.Screen name="connect" options={{ href: null }} />
       </Tabs>
     </View>

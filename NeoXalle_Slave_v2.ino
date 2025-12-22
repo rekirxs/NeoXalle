@@ -40,9 +40,8 @@ bool ledActive = false;
 unsigned long lightOnTime = 0;
 uint32_t currentColor = 0;
 
-// Tap detection
-const float TAP_THRESHOLD = 5000;  // Moderate threshold for tap detection
-const int TAP_SAMPLES = 1;          // Single sample with debounce
+// Tap detection using 1.8g acceleration
+const float TAP_G_THRESHOLD = 1.8;  // 1.8g detection threshold
 unsigned long lastTapTime = 0;
 const unsigned long TAP_DEBOUNCE = 300;  // 300ms debounce
 
@@ -343,14 +342,18 @@ bool detectTap() {
   int16_t ax, ay, az;
   mpu.getAcceleration(&ax, &ay, &az);
   
+  // Calculate total acceleration magnitude
   float accelMagnitude = sqrt((float)ax * ax + (float)ay * ay + (float)az * az);
-  float gravity = 4096.0;
-  float accelWithoutGravity = abs(accelMagnitude - gravity);
   
-  if (accelWithoutGravity > TAP_THRESHOLD) {
+  // Convert to g-force (scale factor 4096 for ±8g range)
+  float gForce = accelMagnitude / 4096.0;
+  
+  // Detect if acceleration exceeds 1.8g
+  if (gForce > TAP_G_THRESHOLD) {
     lastTapTime = millis();
-    Serial.print("👆 TAP! Accel: ");
-    Serial.println(accelWithoutGravity);
+    Serial.print("👆 TAP! G-force: ");
+    Serial.print(gForce);
+    Serial.println("g");
     return true;
   }
   

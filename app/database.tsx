@@ -19,7 +19,7 @@ interface GameRecord {
 
 const STORAGE_KEY = '@neoxalle_game_history';
 
-// Export function to add game records from other screens
+
 export async function saveGameRecord(record: Omit<GameRecord, 'id'>) {
   const gameRecord: GameRecord = {
     ...record,
@@ -29,7 +29,7 @@ export async function saveGameRecord(record: Omit<GameRecord, 'id'>) {
   try {
     const existing = await AsyncStorage.getItem(STORAGE_KEY);
     const history: GameRecord[] = existing ? JSON.parse(existing) : [];
-    history.unshift(gameRecord); // Add to beginning
+    history.unshift(gameRecord);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(history));
     console.log('Game saved to database:', gameRecord);
   } catch (error) {
@@ -124,7 +124,7 @@ export default function DatabaseScreen() {
   };
 
   return (
-    <LinearGradient colors={[Theme.background.darkPrimary, Theme.background.darkSecondary]} style={styles.container}>
+    <LinearGradient colors={[Theme.neon.purpleDark, '#1a1a1a', '#0d0d0d']} start={[0, 0]} end={[0, 1]} style={styles.container}>
       <View style={styles.header}>
         <MaterialCommunityIcons name="database" size={40} color={Theme.neon.purpleLight} />
         <Text style={styles.title}>Game Database</Text>
@@ -153,13 +153,13 @@ export default function DatabaseScreen() {
         </BlurView>
       </View>
 
-      {/* Clear History Button */}
+   
       <TouchableOpacity style={styles.clearButton} onPress={clearHistory}>
         <MaterialCommunityIcons name="delete-sweep" size={24} color="#ff4444" />
         <Text style={styles.clearButtonText}>Clear History</Text>
       </TouchableOpacity>
 
-      {/* Game History */}
+     
       <ScrollView style={styles.historyContainer} showsVerticalScrollIndicator={false}>
         {gameHistory.length === 0 ? (
           <View style={styles.emptyState}>

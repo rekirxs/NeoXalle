@@ -18,7 +18,7 @@ import {
 import { BleManager, Device } from 'react-native-ble-plx';
 import { Theme } from '../constants/theme';
 
-// Bluetooth configuration
+
 const NEOXALLE_NAME = 'NEOXALLE';
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -30,18 +30,18 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
   const unlockScale = useRef(new Animated.Value(1)).current;
   const wasConnected = useRef(false);
   const glowLoopRef = useRef<Animated.CompositeAnimation | null>(null);
-  // Connected pulse
+  
   const pulseScale = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0)).current;
   const pulseLoopRef = useRef<Animated.CompositeAnimation | null>(null);
-  // Fancy connect bursts
+
   const burst1Scale = useRef(new Animated.Value(1)).current;
   const burst1Opacity = useRef(new Animated.Value(0)).current;
   const burst2Scale = useRef(new Animated.Value(1)).current;
   const burst2Opacity = useRef(new Animated.Value(0)).current;
   const burst3Scale = useRef(new Animated.Value(1)).current;
   const burst3Opacity = useRef(new Animated.Value(0)).current;
-  // Disconnected spinner
+  
   const spinnerRotate = useRef(new Animated.Value(0)).current;
   const spinnerLoopRef = useRef<Animated.CompositeAnimation | null>(null);
   const spinnerScale = useRef(new Animated.Value(1)).current;
@@ -72,13 +72,13 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
         ]).start(() => { reset(); wasConnected.current = false; });
       } else { reset(); wasConnected.current = false; }
 
-      // Disconnected spinner
+      
       spinnerRotate.setValue(0);
       const spinnerDuration = loading ? 900 : 1400;
       const spinLoop = Animated.loop(Animated.timing(spinnerRotate, { toValue: 1, duration: spinnerDuration, easing: Easing.linear, useNativeDriver: true }));
       spinnerLoopRef.current = spinLoop;
       spinLoop.start();
-      // Subtle zoom in/out (ping-pong)
+      
       spinnerScale.setValue(1);
       const zoomLoop = Animated.loop(
         Animated.sequence([
@@ -91,7 +91,7 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
       return;
     }
 
-    // Connected
+   
     if (glowLoopRef.current) { try { glowLoopRef.current.stop(); } catch {} glowLoopRef.current = null; }
     if (pulseLoopRef.current) { try { pulseLoopRef.current.stop(); } catch {} pulseLoopRef.current = null; }
     if (spinnerLoopRef.current) { try { spinnerLoopRef.current.stop(); } catch {} spinnerLoopRef.current = null; }
@@ -111,7 +111,6 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
         ]));
         glowLoopRef.current = loop; loop.start();
 
-        // Connected pulse loop
         pulseOpacity.setValue(0.08); pulseScale.setValue(1);
         const pulseLoop = Animated.loop(Animated.sequence([
           Animated.parallel([
@@ -125,7 +124,7 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
         ]));
         pulseLoopRef.current = pulseLoop; pulseLoop.start();
 
-        // Staggered burst rings
+        
         burst1Scale.setValue(0.95); burst1Opacity.setValue(0.0);
         burst2Scale.setValue(0.95); burst2Opacity.setValue(0.0);
         burst3Scale.setValue(0.95); burst3Opacity.setValue(0.0);
@@ -167,14 +166,14 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
         />
       </Animated.View>
 
-      {/* Disconnected: 12-dot throbber with chasing fade */}
+      
       {!connected && (
         <View style={{ position: 'absolute', width: 240, height: 240 }}>
-          {/* Center magnifying glass icon (zooms with spinner) */}
+          
           <Animated.View style={{ position: 'absolute', left: 120 - 12, top: 120 - 12, transform: [{ scale: spinnerScale }] }}>
             <MaterialCommunityIcons name="magnify" size={24} color="#000" />
           </Animated.View>
-          {/* Rotating throbber dots */}
+        
           <Animated.View
             style={{ position: 'absolute', width: 240, height: 240, transform: [
               { rotate: spinnerRotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
@@ -196,7 +195,7 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
         </View>
       )}
 
-      {/* Glow sweep masked to pod */}
+    
       {connected && (
         <MaskedView style={{ position: 'absolute', width: 220, height: 220 }} maskElement={<Image source={require('../assets/images/pod-transparent.png')} style={{ width: 220, height: 220, resizeMode: 'contain' }} />}>
           <Animated.View style={{ width: 900, height: 220, opacity: glowOpacity, transform: [{ translateX: glowX }] }}>
@@ -205,12 +204,12 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
         </MaskedView>
       )}
 
-      {/* Connected pulse ring */}
+      
       {connected && (
         <Animated.View style={{ position: 'absolute', width: 240, height: 240, borderRadius: 120, borderWidth: 2, borderColor: Theme.neon.purpleLight, opacity: pulseOpacity, transform: [{ scale: pulseScale }] }} />
       )}
 
-      {/* Connected burst rings */}
+      
       {connected && (
         <>
           <Animated.View style={{ position: 'absolute', width: 240, height: 240, borderRadius: 120, borderWidth: 2, borderColor: Theme.neon.purpleLight, opacity: burst1Opacity, transform: [{ scale: burst1Scale }] }} />
@@ -226,7 +225,7 @@ function PodImage({ connected, loading }: { connected: boolean; loading: boolean
 export default function ConnectScreen() {
   const router = useRouter();
   
-  // 🔵 STATE
+  
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [status, setStatus] = useState('Disconnected');
   const [, setLastMessage] = useState('None');
@@ -235,17 +234,17 @@ export default function ConnectScreen() {
   const [scanDotCount, setScanDotCount] = useState(0);
   const [connectDotCount, setConnectDotCount] = useState(0);
 
-  // 🔵 REF (prevents Android BLE race condition)
+ 
   const pendingDevice = useRef<Device | null>(null);
 
-  // 🔵 CLEANUP
+  
   useEffect(() => {
     return () => {
       bleManager.destroy();
     };
   }, []);
 
-  // 🔵 SCANNING DOTS ANIMATION (., .., ...)
+ 
   useEffect(() => {
     if (isScanning) {
       setScanDotCount(1);
@@ -258,7 +257,7 @@ export default function ConnectScreen() {
     }
   }, [isScanning]);
 
-  // 🔵 CONNECTING DOTS ANIMATION (., .., ...)
+  
   useEffect(() => {
     if (isConnecting) {
       setConnectDotCount(1);
@@ -271,7 +270,7 @@ export default function ConnectScreen() {
     }
   }, [isConnecting]);
 
-  // 🔵 ANDROID PERMISSIONS
+  
   async function requestPermissions() {
     if (Platform.OS === 'android') {
       await PermissionsAndroid.requestMultiple([
@@ -282,7 +281,7 @@ export default function ConnectScreen() {
     }
   }
 
-  // 🔵 SCAN → STOP → DELAY → CONNECT (SAFE)
+ 
   async function startScan() {
     if (isScanning || isConnecting || connectedDevice) return;
 
@@ -314,7 +313,7 @@ export default function ConnectScreen() {
           setIsScanning(false);
           setStatus('Device found');
 
-          // ⏱ CRITICAL DELAY (Android BLE stability)
+         
           setTimeout(() => {
             connect(device).catch((err: unknown) => {
               console.warn('connect error (delayed):', err);
@@ -328,14 +327,14 @@ export default function ConnectScreen() {
       setIsScanning(false);
     }
 
-    // Safety stop
+ 
     setTimeout(() => {
       bleManager.stopDeviceScan();
       setIsScanning(false);
     }, 10000);
   }
 
-  // 🔵 CONNECT (HARDENED)
+ 
   async function connect(device: Device) {
     if (connectedDevice || isConnecting) return;
 
@@ -374,7 +373,7 @@ export default function ConnectScreen() {
                   .from(characteristic.value, 'base64')
                   .toString('utf-8');
 
-                console.log('📡 From Neoxalle:', value);
+                console.log('From Neoxalle:', value);
                 setLastMessage(value);
               } catch (parseErr) {
                 console.warn('Failed to parse characteristic value:', parseErr);
@@ -399,7 +398,7 @@ export default function ConnectScreen() {
     }
   }
 
-  // 🔵 DISCONNECT
+ 
   async function disconnectDevice() {
     if (!connectedDevice) return;
     try {
@@ -409,10 +408,9 @@ export default function ConnectScreen() {
       setStatus('Disconnected');
       setIsConnecting(false);
       pendingDevice.current = null;
-      console.log('✅ Disconnected and cleaned up');
+      console.log('Disconnected and cleaned up');
     } catch (e) {
       console.log('Disconnect error:', e);
-      // Force cleanup even if disconnect fails
       setConnectedDevice(null);
       setStatus('Disconnected');
       setIsConnecting(false);
@@ -420,7 +418,7 @@ export default function ConnectScreen() {
     }
   }
 
-  // UI
+  
   return (
     <LinearGradient
       colors={[Theme.neon.purpleDark, '#1a1a1a', '#0d0d0d']}
@@ -428,7 +426,7 @@ export default function ConnectScreen() {
       end={[0, 1]}
       style={{ flex: 1, padding: 24 }}
     >
-      {/* Back Button */}
+   
       <TouchableOpacity
         onPress={() => router.back()}
         style={{
@@ -452,7 +450,7 @@ export default function ConnectScreen() {
           HUB Connection
         </Text>
 
-        {/* Status */}
+       
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 30 }}>
           <Text
             style={{
@@ -474,10 +472,10 @@ export default function ConnectScreen() {
           </Text>
         </View>
 
-        {/* Pod Image (unlock + continuous glow when connected; loader rings when disconnected) */}
+        
         <PodImage connected={!!connectedDevice} loading={isScanning || isConnecting} />
 
-        {/* Device Info Card */}
+       
         <BlurView
           intensity={60}
           tint="dark"
@@ -501,7 +499,6 @@ export default function ConnectScreen() {
           <Text style={{ color: '#ccc', fontSize: 13 }}>Status: {isScanning ? `Scanning${'.'.repeat(scanDotCount)}` : isConnecting ? `Connecting${'.'.repeat(connectDotCount)}` : status}</Text>
         </BlurView>
 
-        {/* Action Buttons */}
         <View style={{ flexDirection: 'row', width: '100%' }}>
           <TouchableOpacity
             onPress={startScan}

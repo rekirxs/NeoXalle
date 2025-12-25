@@ -8,9 +8,7 @@ import { Theme } from '../constants/theme';
 
 SystemUI.setBackgroundColorAsync(Theme.background.darkPrimary);
 
-// Guard expo-keep-awake calls to avoid native activation crashes at runtime.
-// This dynamically wraps common keep-awake functions with try/catch so
-// if the native module fails to activate, the app won't throw an uncaught error.
+
 (async () => {
   try {
     const KeepAwake = await import('expo-keep-awake');
@@ -29,13 +27,13 @@ SystemUI.setBackgroundColorAsync(Theme.background.darkPrimary);
           };
         }
       } catch {
-        // ignore
+        
       }
     };
 
     ['activateKeepAwake', 'deactivateKeepAwake', 'preventAutoHideAsync', 'allowAutoHideAsync'].forEach(wrap);
   } catch {
-    // ignore
+   
   }
 })();
 
@@ -99,6 +97,9 @@ export default function TabsLayout() {
         <Tabs.Screen name="control" options={{ title: '' }} />
         <Tabs.Screen name="database" options={{ title: '' }} />
         <Tabs.Screen name="connect" options={{ href: null }} />
+        <Tabs.Screen name="custom-mode" options={{ href: null }} />
+        
+        <Tabs.Screen name="modal" options={{ href: null }} />
       </Tabs>
     </View>
   );
